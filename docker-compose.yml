@@ -1,0 +1,93 @@
+version: "3.4"
+
+services:
+  traefik:
+    container_name: traefik
+    image: traefik:v2.2.0
+    restart: always
+    command:
+      # Entrypoints
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+
+      # Redirection from HTTP to HTTPS
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.web.http.redirections.entryPoint.scheme=https
+      - --entrypoints.websecure.http.tls.certResolver=leresolverresolver
+
+      # Docker Provider
+      - --providers.docker=true
+
+      # Logs
+      - --log=true
+      - --log.level=INFO
+
+      # API and Dashboard
+      - --api.dashboard=true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - frontend
+    labels:
+      - "traefik.enable=true"
+
+      #Traefik dashboard
+      - "traefik.http.routers.traefik.rule=Host(`traefik.designli.io`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=leresolver"
+
+      # Catch-all to redirect HTTP to HTTPS
+      - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      # - "traefik.http.routers.traefik.rule=Host(`traefik.statping.com`)"
+      # - "traefik.http.routers.traefik.service=api@internal"
+      # - "traefik.http.routers.traefik.middlewares=admin"
+      # - "traefik.http.routers.traefik.tls.certresolver=leresolver"
+      # - "traefik.http.routers.traefik.entrypoints=websecure"
+      # - "traefik.http.routers.http-catchall.entrypoints=web"
+      # - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
+      # - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+      # - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+  statping:
+    container_name: statping
+    image: adamboutcher/statping-ng
+    restart: always
+    networks:
+      - frontend
+    volumes:
+      - ./statping_data:/app
+    environment:
+      DB_CONN: sqlite
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.statping.rule=Host(`statping.designli.io`)"
+      - "traefik.http.routers.statping.entrypoints=websecure"
+      - "traefik.http.routers.statping.tls.certresolver=leresolver"
+      - "traefik.http.services.statping.loadbalancer.server.port=8080"
+
+
+  uptime-kuma:
+    container_name: uptime-kuma
+    image: louislam/uptime-kuma:1
+    restart: always
+    networks:
+      - frontend
+    volumes:
+      - ./uptimekuma_data:/app/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.uptimekuma.rule=Host(`kuma.designli.io`)"
+      - "traefik.http.routers.uptimekuma.entrypoints=websecure"
+      - "traefik.http.routers.uptimekuma.tls.certresolver=leresolver"
+      - "traefik.http.services.uptimekuma.loadbalancer.server.port=3001"
+
+networks:
+  frontend:
+    driver: bridge
