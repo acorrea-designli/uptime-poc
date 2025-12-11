@@ -11,7 +11,6 @@ services:
       # Redirection from HTTP to HTTPS
       - --entrypoints.web.http.redirections.entryPoint.to=websecure
       - --entrypoints.web.http.redirections.entryPoint.scheme=https
-      - --entrypoints.websecure.http.tls.certResolver=leresolverresolver
 
       # Docker Provider
       - --providers.docker=true
@@ -44,7 +43,7 @@ services:
       - "traefik.http.routers.traefik.rule=Host(`traefik.designli.io`)"
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.routers.traefik.entrypoints=websecure"
-      - "traefik.http.routers.traefik.tls.certresolver=leresolver"
+      - "traefik.http.routers.traefik.tls.certresolver=le"
 
       # Catch-all to redirect HTTP to HTTPS
       - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
@@ -75,7 +74,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.statping.rule=Host(`statping.designli.io`)"
       - "traefik.http.routers.statping.entrypoints=websecure"
-      - "traefik.http.routers.statping.tls.certresolver=leresolver"
+      - "traefik.http.routers.statping.tls.certresolver=le"
       - "traefik.http.services.statping.loadbalancer.server.port=8080"
 
 
@@ -91,7 +90,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.uptimekuma.rule=Host(`kuma.designli.io`)"
       - "traefik.http.routers.uptimekuma.entrypoints=websecure"
-      - "traefik.http.routers.uptimekuma.tls.certresolver=leresolver"
+      - "traefik.http.routers.uptimekuma.tls.certresolver=le"
       - "traefik.http.services.uptimekuma.loadbalancer.server.port=3001"
 
 networks:
